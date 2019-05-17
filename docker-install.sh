@@ -50,10 +50,9 @@ checkFile(){
 
     FILE_NAME=$(echo ${FILE##*/})
     FILE_PATH=$(getFullPath $FILE)
-    if [[ !  $FILE_NAME =~ ".tgz" || !  $FILE_NAME =~ ".tar.gz" ]];then
+    if [[ !  $FILE_NAME =~ ".tgz" && !  $FILE_NAME =~ ".tar.gz" ]];then
         colorEcho $RED "$FILE not a tgz file!\n"
         echo -e "please download docker binary file: $(colorEcho $FUCHSIA $DOWNLOAD_URL)\n"
-        colorEcho $ "$FILE not a tgz file!\n"
         exit 1
     fi
 }
@@ -70,9 +69,9 @@ while [[ $# > 0 ]];do
         -h|--help)
         echo "Usage: $0 [OPTIONS]"
         echo "Options:"
-        echo "  -f [file_path]/--file=[file_path]: offline tgz file path"
-        echo "  -h, --help: find help"
-        echo "Example:  $0 -f docker-18.09.tgz"
+        echo "   -f [file_path], --file=[file_path]:  offline tgz file path"
+        echo "   -h, --help:                          find help"
+        echo ""
         echo "Docker binary download link:  $(colorEcho $FUCHSIA $DOWNLOAD_URL)"
         exit 0
         shift # past argument
