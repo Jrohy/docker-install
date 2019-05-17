@@ -9,6 +9,7 @@ source <(curl -sL https://git.io/fj8OJ)
 
 ## Install/Update docker offline
 ```
-source <(curl -sL https://git.io/fj8OJ) -f /root/docker-18.09.6.tgz
+./docker-install.sh -f /root/docker-18.09.6.tgz
 ```
+bash-completion file **docker.bash** should put same directory with docker-install.sh
 offline file: https://download.docker.com/linux/static/stable/x86_64/ 

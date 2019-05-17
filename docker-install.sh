@@ -4,7 +4,7 @@
 
 OFFLINE_FILE=""
 
-DOWNLOAD_URL="https://download.docker.com/linux/static/stable/x86_64/"
+DOWNLOAD_URL="https://download.docker.com/linux/static/stable/x86_64"
 
 LATEST_VERSION_CHECK="https://api.github.com/repos/docker/docker-ce/releases/latest"
 
@@ -159,7 +159,10 @@ onlineInstall(){
     dependentInstall
     LASTEST_VERSION=$(curl -H 'Cache-Control: no-cache' -s "$LATEST_VERSION_CHECK" | grep 'tag_name' | cut -d\" -f4 | sed 's/v//g')
     wget $DOWNLOAD_URL/docker-$LASTEST_VERSION.tgz
-    [[ $? != 0 ]] && colorEcho ${RED} "Fail download docker-$LASTEST_VERSION.tgz!" && exit 1
+    if [[ $? != 0 ]];then
+        colorEcho ${RED} "Fail download docker-$LASTEST_VERSION.tgz!"
+        exit 1
+    fi
     tar xzvf docker-$LASTEST_VERSION.tgz
     cp -rf docker/* /usr/bin/
     rm -rf docker
