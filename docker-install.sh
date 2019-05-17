@@ -190,7 +190,7 @@ main(){
     systemctl daemon-reload
     systemctl enable docker.service
     systemctl restart docker
-    colorEcho $GREEN "docker install success!"
+    echo -e "docker $(colorEcho $BLUE $(docker info|grep 'Server Version'|awk '{print $3}')) install success!"
 }
 
 main
