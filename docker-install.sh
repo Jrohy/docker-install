@@ -107,6 +107,7 @@ checkSys() {
 }
 
 writeService(){
+        mkdir -p /usr/lib/systemd/system/
         cat > /usr/lib/systemd/system/docker.service << EOF
 [Unit]
 Description=Docker Application Container Engine
