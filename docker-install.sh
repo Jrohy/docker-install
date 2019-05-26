@@ -67,10 +67,9 @@ while [[ $# > 0 ]];do
         shift
         ;;
         -h|--help)
-        echo "Usage: $0 [OPTIONS]"
-        echo "Options:"
-        echo "   -f [file_path], --file=[file_path]:  offline tgz file path"
-        echo "   -h, --help:                          find help"
+        echo "$0 [-h] [-f file]"
+        echo "   -f, --file=[file_path]      offline tgz file path"
+        echo "   -h, --help                  find help"
         echo ""
         echo "Docker binary download link:  $(colorEcho $FUCHSIA $DOWNLOAD_URL)"
         exit 0
@@ -85,6 +84,14 @@ done
 #############################
 
 checkSys() {
+    if [[ -z `command -v systemctl` ]];then
+        colorEcho ${RED} "system must be have systemd!"
+        exit 1
+    fi
+    if [[ -z `uname -a|grep x86_64` ]];then
+        colorEcho ${RED} "docker only support 64-bit system!"
+        exit 1
+    fi
     # check os
     if [[ -e /etc/redhat-release ]];then
         if [[ $(cat /etc/redhat-release | grep Fedora) ]];then
@@ -144,7 +151,6 @@ StartLimitInterval=60s
 WantedBy=multi-user.target
 EOF
 }
-
 
 dependentInstall(){
     if [[ ${OS} == 'CentOS' || ${OS} == 'Fedora' ]];then
