@@ -172,9 +172,9 @@ onlineInstall(){
     tar xzvf docker-$LASTEST_VERSION.tgz
     cp -rf docker/* /usr/bin/
     rm -rf docker
-    curl -L $COMPLETION_FILE -o /etc/bash_completion.d/docker
-    chmod +x /etc/bash_completion.d/docker
-    source /etc/bash_completion.d/docker
+    curl -L $COMPLETION_FILE -o /usr/share/bash-completion/completions/docker
+    chmod +x /usr/share/bash-completion/completions/docker
+    source /usr/share/bash-completion/completions/docker
 }
 
 offlineInstall(){
@@ -186,9 +186,9 @@ offlineInstall(){
     cd ${ORIGIN_PATH} >/dev/null
     if [[ -e docker.bash || -e $FILE_PATH/docker.bash ]];then
         [[ -e docker.bash ]] && COMPLETION_FILE_PATH=`getFullPath docker.bash` || COMPLETION_FILE_PATH=$FILE_PATH
-        cp -f $COMPLETION_FILE_PATH/docker.bash /etc/bash_completion.d/docker
-        chmod +x /etc/bash_completion.d/docker
-        source /etc/bash_completion.d/docker
+        cp -f $COMPLETION_FILE_PATH/docker.bash /usr/share/bash-completion/completions/docker
+        chmod +x /usr/share/bash-completion/completions/docker
+        source /usr/share/bash-completion/completions/docker
     fi
 }
 
