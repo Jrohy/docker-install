@@ -90,7 +90,7 @@ checkSys() {
         colorEcho ${RED} "system must be have systemd!"
         exit 1
     fi
-    if [[ -z `uname -a|grep x86_64` ]];then
+    if [[ -z `uname -m|grep 64` ]];then
         colorEcho ${RED} "docker only support 64-bit system!"
         exit 1
     fi
