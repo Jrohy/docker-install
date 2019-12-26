@@ -4,7 +4,9 @@
 
 OFFLINE_FILE=""
 
-DOWNLOAD_URL="https://download.docker.com/linux/static/stable/x86_64"
+ARCH=$(uname -p)
+
+DOWNLOAD_URL="https://download.docker.com/linux/static/stable/$ARCH"
 
 LATEST_VERSION_CHECK="https://api.github.com/repos/docker/docker-ce/releases/latest"
 
