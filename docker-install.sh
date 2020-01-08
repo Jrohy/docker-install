@@ -4,7 +4,7 @@
 
 OFFLINE_FILE=""
 
-ARCH=$(uname -p)
+ARCH=$(uname -m)
 
 DOWNLOAD_URL="https://download.docker.com/linux/static/stable/$ARCH"
 
@@ -95,22 +95,14 @@ checkSys() {
         exit 1
     fi
     # check os
-    if [[ -e /etc/redhat-release ]];then
-        if [[ $(cat /etc/redhat-release | grep Fedora) ]];then
-            OS='Fedora'
-            PACKAGE_MANAGER='dnf'
-        else
-            OS='CentOS'
-            PACKAGE_MANAGER='yum'
-        fi
-    elif [[ $(cat /etc/issue | grep Debian) ]];then
-        OS='Debian'
+    if [[ `command -v apt-get` ]];then
         PACKAGE_MANAGER='apt-get'
-    elif [[ $(cat /etc/issue | grep Ubuntu) ]];then
-        OS='Ubuntu'
-        PACKAGE_MANAGER='apt-get'
+    elif [[ `command -v dnf` ]];then
+        PACKAGE_MANAGER='dnf'
+    elif [[ `command -v yum` ]];then
+        PACKAGE_MANAGER='yum'
     else
-        colorEcho ${RED} "Not support OS, Please reinstall OS and retry!"
+        colorEcho $RED "Not support OS!"
         exit 1
     fi
 }
@@ -155,7 +147,7 @@ EOF
 }
 
 dependentInstall(){
-    if [[ ${OS} == 'CentOS' || ${OS} == 'Fedora' ]];then
+    if [[ ${PACKAGE_MANAGER} == 'yum' || ${PACKAGE_MANAGER} == 'dnf' ]];then
         ${PACKAGE_MANAGER} install bash-completion -y
     else
         ${PACKAGE_MANAGER} update
