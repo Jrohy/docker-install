@@ -550,17 +550,18 @@ __docker_complete_nodes() {
 # output to the IDs or names of matching items. This setting takes
 # precedence over the environment setting.
 __docker_services() {
-	local fields='$2'  # default: service name only
-	[ "${DOCKER_COMPLETION_SHOW_SERVICE_IDS}" = yes ] && fields='$1,$2' # ID & name
+	local format='{{.Name}}'  # default: service name only
+	[ "${DOCKER_COMPLETION_SHOW_SERVICE_IDS}" = yes ] && format='{{.ID}} {{.Name}}' # ID & name
 
 	if [ "$1" = "--id" ] ; then
-		fields='$1' # IDs only
+		format='{{.ID}}' # IDs only
 		shift
 	elif [ "$1" = "--name" ] ; then
-		fields='$2' # names only
+		format='{{.Name}}' # names only
 		shift
 	fi
-        __docker_q service ls "$@" | awk "NR>1 {print $fields}"
+
+	__docker_q service ls --quiet --format "$format" "$@"
 }
 
 # __docker_complete_services applies completion of services based on the current
@@ -572,7 +573,7 @@ __docker_complete_services() {
 		current="$2"
 		shift 2
 	fi
-	COMPREPLY=( $(compgen -W "$(__docker_services "$@")" -- "$current") )
+	COMPREPLY=( $(__docker_services "$@" --filter "name=$current") )
 }
 
 # __docker_tasks returns a list of all task IDs.
@@ -1204,6 +1205,7 @@ _docker_build() {
 
 _docker_builder() {
 	local subcommands="
+		build
 		prune
 	"
 	__docker_subcommands "$subcommands" && return
@@ -1216,6 +1218,10 @@ _docker_builder() {
 			COMPREPLY=( $( compgen -W "$subcommands" -- "$cur" ) )
 			;;
 	esac
+}
+
+_docker_builder_build() {
+	_docker_image_build
 }
 
 _docker_builder_prune() {
@@ -2545,6 +2551,7 @@ _docker_daemon() {
 		--log-opt
 		--max-concurrent-downloads
 		--max-concurrent-uploads
+		--max-download-attempts
 		--metrics-addr
 		--mtu
 		--network-control-plane-mtu
@@ -2689,73 +2696,8 @@ _docker_daemon() {
 	esac
 }
 
-_docker_deploy() {
-	__docker_server_is_experimental && _docker_stack_deploy
-}
-
 _docker_diff() {
 	_docker_container_diff
-}
-
-
-_docker_engine() {
-	local subcommands="
-		activate
-		check
-		update
-	"
-	__docker_subcommands "$subcommands" && return
-
-	case "$cur" in
-		-*)
-			COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
-			;;
-		*)
-			COMPREPLY=( $( compgen -W "$subcommands" -- "$cur" ) )
-			;;
-	esac
-}
-
-_docker_engine_activate() {
-	case "$prev" in
-		--containerd|--engine-image|--format|--license|--registry-prefix|--version)
-			return
-			;;
-	esac
-
-	case "$cur" in
-		-*)
-			COMPREPLY=( $( compgen -W "--containerd --display-only --engine-image --format --help --license --quiet --registry-prefix --version" -- "$cur" ) )
-			;;
-	esac
-}
-
-_docker_engine_check() {
-	case "$prev" in
-		--containerd|--engine-image|--format|--registry-prefix)
-			return
-			;;
-	esac
-
-	case "$cur" in
-		-*)
-			COMPREPLY=( $( compgen -W "--containerd --downgrades --engine-image --format --help --pre-releases --quiet -q --registry-prefix --upgrades" -- "$cur" ) )
-			;;
-	esac
-}
-
-_docker_engine_update() {
-	case "$prev" in
-		--containerd|--engine-image|--registry-prefix|--version)
-			return
-			;;
-	esac
-
-	case "$cur" in
-		-*)
-			COMPREPLY=( $( compgen -W "--containerd --engine-image --help --registry-prefix --version" -- "$cur" ) )
-			;;
-	esac
 }
 
 
@@ -2873,11 +2815,6 @@ _docker_image_build() {
 		boolean_options+="
 			--compress
 		"
-		if __docker_server_is_experimental ; then
-			boolean_options+="
-				--stream
-			"
-		fi
 	fi
 
 	local all_options="$options_with_args $boolean_options"
@@ -3130,7 +3067,7 @@ _docker_image_pull() {
 _docker_image_push() {
 	case "$cur" in
 		-*)
-			COMPREPLY=( $( compgen -W "--disable-content-trust=false --help" -- "$cur" ) )
+			COMPREPLY=( $( compgen -W "--all-tags -a --disable-content-trust=false --help --quiet -q" -- "$cur" ) )
 			;;
 		*)
 			local counter=$(__docker_pos_first_nonflag)
@@ -4186,6 +4123,7 @@ _docker_manifest_annotate() {
 				mips64
 				mips64le
 				ppc64le
+				riscv64
 				s390x" -- "$cur" ) )
 			return
 			;;
@@ -4876,10 +4814,6 @@ _docker_stack_deploy() {
 	__docker_complete_stack_orchestrator_options && return
 
 	case "$prev" in
-		--bundle-file)
-			_filedir dab
-			return
-			;;
 		--compose-file|-c)
 			_filedir yml
 			return
@@ -4893,13 +4827,12 @@ _docker_stack_deploy() {
 	case "$cur" in
 		-*)
 			local options="--compose-file -c --help --orchestrator"
-			__docker_server_is_experimental && __docker_stack_orchestrator_is swarm && options+=" --bundle-file"
 			__docker_stack_orchestrator_is kubernetes && options+=" --kubeconfig --namespace"
 			__docker_stack_orchestrator_is swarm && options+=" --prune --resolve-image --with-registry-auth"
 			COMPREPLY=( $( compgen -W "$options" -- "$cur" ) )
 			;;
 		*)
-			local counter=$(__docker_pos_first_nonflag '--bundle-file|--compose-file|-c|--kubeconfig|--namespace|--orchestrator|--resolve-image')
+			local counter=$(__docker_pos_first_nonflag '--compose-file|-c|--kubeconfig|--namespace|--orchestrator|--resolve-image')
 			if [ "$cword" -eq "$counter" ]; then
 				__docker_complete_stacks
 			fi
@@ -5463,7 +5396,6 @@ _docker() {
 		config
 		container
 		context
-		engine
 		image
 		network
 		node
@@ -5529,7 +5461,6 @@ _docker() {
 
 	local experimental_server_commands=(
 		checkpoint
-		deploy
 	)
 
 	local commands=(${management_commands[*]} ${top_level_commands[*]})
