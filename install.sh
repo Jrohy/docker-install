@@ -165,7 +165,7 @@ onlineInstall(){
     fi
     tar xzvf docker-$LASTEST_VERSION.tgz
     cp -rf docker/* /usr/bin/
-    rm -rf docker
+    rm -rf docker docker-$LASTEST_VERSION.tgz
     curl -L $COMPLETION_FILE -o /usr/share/bash-completion/completions/docker
     chmod +x /usr/share/bash-completion/completions/docker
     source /usr/share/bash-completion/completions/docker
