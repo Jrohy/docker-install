@@ -4,6 +4,8 @@
 
 OFFLINE_FILE=""
 
+STANDARD_MODE=0
+
 ARCH=$(uname -m)
 
 DOWNLOAD_URL="https://download.docker.com/linux/static/stable/$ARCH"
@@ -25,6 +27,15 @@ FUCHSIA="35m"
 colorEcho(){
     COLOR=$1
     echo -e "\033[${COLOR}${@:2}\033[0m"
+}
+
+ipIsConnect(){
+    ping -c2 -i0.3 -W1 $1 &>/dev/null
+    if [ $? -eq 0 ];then
+        return 0
+    else
+        return 1
+    fi
 }
 
 getFullPath() {
@@ -68,10 +79,15 @@ while [[ $# > 0 ]];do
         checkFile $OFFLINE_FILE
         shift
         ;;
+        -s|--standard)
+        STANDARD_MODE=1
+        shift
+        ;;
         -h|--help)
         echo "$0 [-h] [-f file]"
         echo "   -f, --file=[file_path]      offline tgz file path"
         echo "   -h, --help                  find help"
+        echo "   -s, --standard              use 'get.docker.com' shell to install"
         echo ""
         echo "Docker binary download link:  $(colorEcho $FUCHSIA $DOWNLOAD_URL)"
         exit 0
@@ -186,11 +202,36 @@ offlineInstall(){
     fi
 }
 
+standardInstall(){
+    # Centos8
+    if [[ $PACKAGE_MANAGER == 'dnf' && `cat /etc/redhat-release |grep CentOS` ]];then
+        ## see https://teddysun.com/587.html
+        dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+        # install lastest containerd
+        local CONTAINERD_URL="https://download.docker.com/linux/centos/7/x86_64/stable/Packages/"
+        local PACKAGE_LIST="`curl -s $CONTAINERD_URL`"
+        CONTAINERD_INDEX=`echo "$PACKAGE_LIST"|grep containerd|awk -F' {2,}' '{print $2}'|awk '{printf("%s %s\n", $1, $2)}'|sort -r|head -n 1`
+        dnf install -y $CONTAINERD_URL/`echo "$PACKAGE_LIST"|grep "$CONTAINERD_INDEX"|awk -F '"' '{print $2}'`
+        dnf install -y --nobest docker-ce
+    else
+        ipIsConnect www.google.com
+        if [[  $? -eq 0 ]]; then
+            sh <(curl -sL https://get.docker.com)
+        else
+            sh <(curl -sL https://get.docker.com) --mirror Aliyun
+        fi
+    fi
+}
+
 main(){
     checkSys
-    [[ $OFFLINE_FILE ]] && offlineInstall || onlineInstall
-    writeService
-    systemctl daemon-reload
+    if [[ $STANDARD_MODE == 1 ]];then
+        standardInstall
+    else
+        [[ $OFFLINE_FILE ]] && offlineInstall || onlineInstall
+        writeService
+        systemctl daemon-reload
+    fi
     systemctl enable docker.service
     systemctl restart docker
     echo -e "docker $(colorEcho $BLUE $(docker info|grep 'Server Version'|awk '{print $3}')) install success!"
