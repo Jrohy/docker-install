@@ -9,6 +9,11 @@ auto install latest docker by online/offline (binaries install)
 source <(curl -sL https://git.io/docker-install)
 ```
 
+## Install docker by official shell(get.docker.com)
+```
+source <(curl -sL https://git.io/docker-install) -s
+```
+
 ## Install/Update docker offline
 ```
 ./install.sh -f /root/docker-18.09.6.tgz
