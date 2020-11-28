@@ -6,12 +6,12 @@ auto install latest docker by online/offline (binaries install)
 
 ## Install/Update docker online
 ```
-source <(curl -sL https://git.io/docker-install)
+source <(curl -sL https://docker-install.netlify.app/install.sh)
 ```
 
 ## Install docker by official shell(get.docker.com)
 ```
-source <(curl -sL https://git.io/docker-install) -s
+source <(curl -sL https://docker-install.netlify.app/install.sh) -s
 ```
 
 ## Install/Update docker offline
