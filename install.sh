@@ -229,7 +229,7 @@ standardInstall(){
     fi
 }
 
-setSysCtl(){
+setSysctl(){
     for CONF in ${SYSCTL_LIST[@]}
     do
         if [[ `sysctl $CONF` =~ "0" ]];then
@@ -252,7 +252,7 @@ main(){
         writeService
         systemctl daemon-reload
     fi
-    setSysCtl
+    setSysctl
     systemctl enable docker.service
     systemctl restart docker
     echo -e "docker $(colorEcho $BLUE $(docker info|grep 'Server Version'|awk '{print $3}')) install success!"
