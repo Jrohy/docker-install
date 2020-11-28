@@ -17,6 +17,12 @@ COMPLETION_FILE="https://raw.githubusercontent.com/docker/cli/master/contrib/com
 # cancel centos alias
 [[ -f /etc/redhat-release ]] && unalias -a
 
+SYSCTL_LIST=(
+    "net.ipv4.ip_forward"
+    "net.bridge.bridge-nf-call-iptables"
+    "net.bridge.bridge-nf-call-ip6tables"
+)
+
 #######color code########
 RED="31m"      
 GREEN="32m"  
@@ -223,6 +229,20 @@ standardInstall(){
     fi
 }
 
+setSysCtl(){
+    for CONF in ${SYSCTL_LIST[@]}
+    do
+        if [[ `sysctl $CONF` =~ "0" ]];then
+            if [[ `cat /etc/sysctl.conf` =~ "$CONF" ]];then
+                sed -i "s/^$CONF.*/$CONF=1/g" /etc/sysctl.conf
+            else
+                echo "$CONF=1" >> /etc/sysctl.conf
+            fi
+            sysctl -p >/dev/null
+        fi
+    done
+}
+
 main(){
     checkSys
     if [[ $STANDARD_MODE == 1 ]];then
@@ -232,6 +252,7 @@ main(){
         writeService
         systemctl daemon-reload
     fi
+    setSysCtl
     systemctl enable docker.service
     systemctl restart docker
     echo -e "docker $(colorEcho $BLUE $(docker info|grep 'Server Version'|awk '{print $3}')) install success!"
