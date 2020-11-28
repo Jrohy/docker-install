@@ -239,7 +239,7 @@ setSysctl(){
             else
                 echo "$CONF=1" >> /etc/sysctl.conf
             fi
-            sysctl -p >/dev/null
+            sysctl -p >/dev/null 2>&1
         fi
     done
 }
