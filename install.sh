@@ -232,7 +232,8 @@ standardInstall(){
 setSysctl(){
     for CONF in ${SYSCTL_LIST[@]}
     do
-        if [[ `sysctl $CONF` =~ "0" ]];then
+        CHECK=`sysctl $CONF 2>/dev/null`
+        if [[ `echo $CHECK` =~ "0" || -z `echo $CHECK` ]];then
             if [[ `cat /etc/sysctl.conf` =~ "$CONF" ]];then
                 sed -i "s/^$CONF.*/$CONF=1/g" /etc/sysctl.conf
             else
