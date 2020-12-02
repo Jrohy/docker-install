@@ -209,6 +209,7 @@ offlineInstall(){
 }
 
 standardInstall(){
+    dependentInstall
     # Centos8
     if [[ $PACKAGE_MANAGER == 'dnf' && `cat /etc/redhat-release |grep CentOS` ]];then
         ## see https://teddysun.com/587.html
