@@ -10,7 +10,7 @@ ARCH=$(uname -m)
 
 DOWNLOAD_URL="https://download.docker.com/linux/static/stable/$ARCH"
 
-LATEST_VERSION_CHECK="https://api.github.com/repos/docker/docker-ce/releases/latest"
+LATEST_VERSION_CHECK="https://api.github.com/repos/moby/moby/releases/latest"
 
 COMPLETION_FILE="https://raw.githubusercontent.com/docker/cli/master/contrib/completion/bash/docker"
 
