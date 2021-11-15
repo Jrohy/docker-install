@@ -170,10 +170,10 @@ EOF
 
 dependentInstall(){
     if [[ ${PACKAGE_MANAGER} == 'yum' || ${PACKAGE_MANAGER} == 'dnf' ]];then
-        ${PACKAGE_MANAGER} install bash-completion wget -y
+        ${PACKAGE_MANAGER} install bash-completion wget iptables -y
     else
         ${PACKAGE_MANAGER} update
-        ${PACKAGE_MANAGER} install bash-completion wget -y
+        ${PACKAGE_MANAGER} install bash-completion wget iptables -y
     fi
 }
 
