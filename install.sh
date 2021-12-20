@@ -6,6 +6,8 @@ OFFLINE_FILE=""
 
 STANDARD_MODE=0
 
+CAN_GOOGLE=0
+
 ARCH=$(uname -m)
 
 DOWNLOAD_URL="https://download.docker.com/linux/static/stable/$ARCH"
@@ -222,11 +224,16 @@ standardInstall(){
         dnf install -y --nobest docker-ce
     else
         ipIsConnect www.google.com
-        if [[  $? -eq 0 ]]; then
-            sh <(curl -sL https://get.docker.com)
-        else
-            sh <(curl -sL https://get.docker.com) --mirror Aliyun
-        fi
+        [[  $? -eq 0 ]] && CAN_GOOGLE=1
+        while :
+        do
+            if [[  $CAN_GOOGLE == 1 ]]; then
+                sh <(curl -sL https://get.docker.com)
+            else
+                sh <(curl -sL https://get.docker.com) --mirror Aliyun
+            fi
+            [[ $? -eq 0 ]] && break
+        done
     fi
 }
 
