@@ -227,7 +227,7 @@ standardInstall(){
         [[  $? -eq 0 ]] && CAN_GOOGLE=1
         while :
         do
-            if [[  $CAN_GOOGLE == 1 || $PACKAGE_MANAGER == "apt-get" ]]; then
+            if [[  $CAN_GOOGLE == 1 ]]; then
                 sh <(curl -sL https://get.docker.com)
             else
                 sh <(curl -sL https://get.docker.com) --mirror Aliyun
