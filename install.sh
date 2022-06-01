@@ -2,6 +2,12 @@
 # Author: Jrohy
 # Github: https://github.com/Jrohy/docker-install
 
+offline_file=""
+
+standard_mode=0
+
+can_google=0
+
 #######color code########
 red="31m"      
 green="32m"  
