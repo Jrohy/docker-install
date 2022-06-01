@@ -2,42 +2,34 @@
 # Author: Jrohy
 # Github: https://github.com/Jrohy/docker-install
 
-OFFLINE_FILE=""
+#######color code########
+red="31m"      
+green="32m"  
+yellow="33m" 
+blue="36m"
+fuchsia="35m"
 
-STANDARD_MODE=0
+download_url="https://download.docker.com/linux/static/stable/$(uname -m)"
 
-CAN_GOOGLE=0
+latest_version_check="https://api.github.com/repos/moby/moby/releases/latest"
 
-ARCH=$(uname -m)
-
-DOWNLOAD_URL="https://download.docker.com/linux/static/stable/$ARCH"
-
-LATEST_VERSION_CHECK="https://api.github.com/repos/moby/moby/releases/latest"
-
-COMPLETION_FILE="https://raw.githubusercontent.com/docker/cli/master/contrib/completion/bash/docker"
+completion_file="https://raw.githubusercontent.com/docker/cli/master/contrib/completion/bash/docker"
 
 # cancel centos alias
 [[ -f /etc/redhat-release ]] && unalias -a
 
-SYSCTL_LIST=(
+sysctl_list=(
     "net.ipv4.ip_forward"
     "net.bridge.bridge-nf-call-iptables"
     "net.bridge.bridge-nf-call-ip6tables"
 )
 
-#######color code########
-RED="31m"      
-GREEN="32m"  
-YELLOW="33m" 
-BLUE="36m"
-FUCHSIA="35m"
-
-colorEcho(){
-    COLOR=$1
-    echo -e "\033[${COLOR}${@:2}\033[0m"
+color_echo(){
+    local color=$1
+    echo -e "\033[${color}${@:2}\033[0m"
 }
 
-ipIsConnect(){
+ip_is_connect(){
     ping -c2 -i0.3 -W1 $1 &>/dev/null
     if [ $? -eq 0 ];then
         return 0
@@ -46,8 +38,8 @@ ipIsConnect(){
     fi
 }
 
-getFullPath() {
-   local PWD=`pwd`
+full_path() {
+   local pwd=`pwd`
    if [ -d $1 ]; then
       cd $1
    elif [ -f $1 ]; then
@@ -56,39 +48,38 @@ getFullPath() {
       cd
    fi
    echo $(cd ..; cd -)
-   cd ${PWD} >/dev/null
+   cd ${pwd} >/dev/null
 }
 
-checkFile(){
-    local FILE=$1
-    if [[ ! -e $FILE ]];then
-        colorEcho $RED "$FILE file not exist!\n"
+check_file(){
+    local file=$1
+    if [[ ! -e $file ]];then
+        color_echo $red "$file file not exist!\n"
         exit 1
-    elif [[ ! -f $FILE ]];then
-        colorEcho $RED "$FILE not a file!\n"
+    elif [[ ! -f $file ]];then
+        color_echo $red "$file not a file!\n"
         exit 1
     fi
 
-    FILE_NAME=$(echo ${FILE##*/})
-    FILE_PATH=$(getFullPath $FILE)
-    if [[ !  $FILE_NAME =~ ".tgz" && !  $FILE_NAME =~ ".tar.gz" ]];then
-        colorEcho $RED "$FILE not a tgz file!\n"
-        echo -e "please download docker binary file: $(colorEcho $FUCHSIA $DOWNLOAD_URL)\n"
+    file_name=$(echo ${file##*/})
+    file_path=$(full_path $file)
+    if [[ !  $file_name =~ ".tgz" && !  $file_name =~ ".tar.gz" ]];then
+        color_echo $red "$file not a tgz file!\n"
+        echo -e "please download docker binary file: $(color_echo $fuchsia $download_url)\n"
         exit 1
     fi
 }
 
 #######get params#########
 while [[ $# > 0 ]];do
-    KEY="$1"
-    case $KEY in
+    case "$1" in
         -f|--file=)
-        OFFLINE_FILE="$2"
-        checkFile $OFFLINE_FILE
+        offline_file="$2"
+        check_file $offline_file
         shift
         ;;
         -s|--standard)
-        STANDARD_MODE=1
+        standard_mode=1
         shift
         ;;
         -h|--help)
@@ -97,7 +88,7 @@ while [[ $# > 0 ]];do
         echo "   -h, --help                  find help"
         echo "   -s, --standard              use 'get.docker.com' shell to install"
         echo ""
-        echo "Docker binary download link:  $(colorEcho $FUCHSIA $DOWNLOAD_URL)"
+        echo "Docker binary download link:  $(color_echo $fuchsia $download_url)"
         exit 0
         shift # past argument
         ;; 
@@ -109,29 +100,29 @@ while [[ $# > 0 ]];do
 done
 #############################
 
-checkSys() {
+check_sys() {
     if [[ -z `command -v systemctl` ]];then
-        colorEcho ${RED} "system must be have systemd!"
+        color_echo ${red} "system must be have systemd!"
         exit 1
     fi
     if [[ -z `uname -m|grep 64` ]];then
-        colorEcho ${RED} "docker only support 64-bit system!"
+        color_echo ${red} "docker only support 64-bit system!"
         exit 1
     fi
     # check os
     if [[ `command -v apt-get` ]];then
-        PACKAGE_MANAGER='apt-get'
+        package_manager='apt-get'
     elif [[ `command -v dnf` ]];then
-        PACKAGE_MANAGER='dnf'
+        package_manager='dnf'
     elif [[ `command -v yum` ]];then
-        PACKAGE_MANAGER='yum'
+        package_manager='yum'
     else
-        colorEcho $RED "Not support OS!"
+        color_echo $red "Not support OS!"
         exit 1
     fi
 }
 
-writeService(){
+write_service(){
         mkdir -p /usr/lib/systemd/system/
         cat > /usr/lib/systemd/system/docker.service << EOF
 [Unit]
@@ -170,64 +161,64 @@ WantedBy=multi-user.target
 EOF
 }
 
-dependentInstall(){
-    if [[ ${PACKAGE_MANAGER} == 'yum' || ${PACKAGE_MANAGER} == 'dnf' ]];then
-        ${PACKAGE_MANAGER} install bash-completion wget iptables -y
+dependent_install(){
+    if [[ ${package_manager} == 'yum' || ${package_manager} == 'dnf' ]];then
+        ${package_manager} install bash-completion wget iptables -y
     else
-        ${PACKAGE_MANAGER} update
-        ${PACKAGE_MANAGER} install bash-completion wget iptables -y
+        ${package_manager} update
+        ${package_manager} install bash-completion wget iptables -y
     fi
 }
 
-onlineInstall(){
-    dependentInstall
-    LASTEST_VERSION=$(curl -H 'Cache-Control: no-cache' -s "$LATEST_VERSION_CHECK" | grep 'tag_name' | cut -d\" -f4 | sed 's/v//g')
-    wget $DOWNLOAD_URL/docker-$LASTEST_VERSION.tgz
+online_install(){
+    dependent_install
+    latest_version=$(curl -H 'Cache-Control: no-cache' -s "$latest_version_check" | grep 'tag_name' | cut -d\" -f4 | sed 's/v//g')
+    wget $download_url/docker-$latest_version.tgz
     if [[ $? != 0 ]];then
-        colorEcho ${RED} "Fail download docker-$LASTEST_VERSION.tgz!"
+        color_echo ${red} "Fail download docker-$latest_version.tgz!"
         exit 1
     fi
-    tar xzvf docker-$LASTEST_VERSION.tgz
+    tar xzvf docker-$latest_version.tgz
     cp -rf docker/* /usr/bin/
-    rm -rf docker docker-$LASTEST_VERSION.tgz
-    curl -L $COMPLETION_FILE -o /usr/share/bash-completion/completions/docker
+    rm -rf docker docker-$latest_version.tgz
+    curl -L $completion_file -o /usr/share/bash-completion/completions/docker
     chmod +x /usr/share/bash-completion/completions/docker
     source /usr/share/bash-completion/completions/docker
 }
 
-offlineInstall(){
-    local ORIGIN_PATH=$(pwd)
-    cd $FILE_PATH
-    tar xzvf $FILE_NAME
+offline_install(){
+    local origin_path=$(pwd)
+    cd $file_path
+    tar xzvf $file_name
     cp -rf docker/* /usr/bin/
     rm -rf docker
-    cd ${ORIGIN_PATH} >/dev/null
-    if [[ -e docker.bash || -e $FILE_PATH/docker.bash ]];then
-        [[ -e docker.bash ]] && COMPLETION_FILE_PATH=`getFullPath docker.bash` || COMPLETION_FILE_PATH=$FILE_PATH
-        cp -f $COMPLETION_FILE_PATH/docker.bash /usr/share/bash-completion/completions/docker
+    cd ${origin_path} >/dev/null
+    if [[ -e docker.bash || -e $file_path/docker.bash ]];then
+        [[ -e docker.bash ]] && completion_file_path=`full_path docker.bash` || completion_file_path=$file_path
+        cp -f $completion_file_path/docker.bash /usr/share/bash-completion/completions/docker
         chmod +x /usr/share/bash-completion/completions/docker
         source /usr/share/bash-completion/completions/docker
     fi
 }
 
-standardInstall(){
-    dependentInstall
+standard_install(){
+    dependent_install
     # Centos8
-    if [[ $PACKAGE_MANAGER == 'dnf' && `cat /etc/redhat-release |grep CentOS` ]];then
+    if [[ $package_manager == 'dnf' && `cat /etc/redhat-release |grep CentOS` ]];then
         ## see https://teddysun.com/587.html
         dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
         # install lastest containerd
-        local CONTAINERD_URL="https://download.docker.com/linux/centos/7/x86_64/stable/Packages/"
-        local PACKAGE_LIST="`curl -s $CONTAINERD_URL`"
-        CONTAINERD_INDEX=`echo "$PACKAGE_LIST"|grep containerd|awk -F' {2,}' '{print $2}'|awk '{printf("%s %s\n", $1, $2)}'|sort -r|head -n 1`
-        dnf install -y $CONTAINERD_URL/`echo "$PACKAGE_LIST"|grep "$CONTAINERD_INDEX"|awk -F '"' '{print $2}'`
+        local containerd_url="https://download.docker.com/linux/centos/7/x86_64/stable/Packages/"
+        local package_list="`curl -s $containerd_url`"
+        local containerd_index=`echo "$package_list"|grep containerd|awk -F' {2,}' '{print $2}'|awk '{printf("%s %s\n", $1, $2)}'|sort -r|head -n 1`
+        dnf install -y $containerd_url/`echo "$package_list"|grep "$containerd_index"|awk -F '"' '{print $2}'`
         dnf install -y --nobest docker-ce
     else
-        ipIsConnect www.google.com
-        [[  $? -eq 0 ]] && CAN_GOOGLE=1
+        ip_is_connect www.google.com
+        [[  $? -eq 0 ]] && can_google=1
         while :
         do
-            if [[  $CAN_GOOGLE == 1 ]]; then
+            if [[  $can_google == 1 ]]; then
                 sh <(curl -sL https://get.docker.com)
             else
                 sh <(curl -sL https://get.docker.com) --mirror Aliyun
@@ -237,15 +228,15 @@ standardInstall(){
     fi
 }
 
-setSysctl(){
-    for CONF in ${SYSCTL_LIST[@]}
+set_sysctl(){
+    for conf in ${sysctl_list[@]}
     do
-        CHECK=`sysctl $CONF 2>/dev/null`
-        if [[ `echo $CHECK` =~ "0" || -z `echo $CHECK` ]];then
-            if [[ `cat /etc/sysctl.conf` =~ "$CONF" ]];then
-                sed -i "s/^$CONF.*/$CONF=1/g" /etc/sysctl.conf
+        check=`sysctl $conf 2>/dev/null`
+        if [[ `echo $check` =~ "0" || -z `echo $check` ]];then
+            if [[ `cat /etc/sysctl.conf` =~ "$conf" ]];then
+                sed -i "s/^$conf.*/$conf=1/g" /etc/sysctl.conf
             else
-                echo "$CONF=1" >> /etc/sysctl.conf
+                echo "$conf=1" >> /etc/sysctl.conf
             fi
             sysctl -p >/dev/null 2>&1
         fi
@@ -253,18 +244,18 @@ setSysctl(){
 }
 
 main(){
-    checkSys
-    if [[ $STANDARD_MODE == 1 ]];then
-        standardInstall
+    check_sys
+    if [[ $standard_mode == 1 ]];then
+        standard_install
     else
-        [[ $OFFLINE_FILE ]] && offlineInstall || onlineInstall
-        writeService
+        [[ $offline_file ]] && offline_install || online_install
+        write_service
         systemctl daemon-reload
     fi
-    setSysctl
+    set_sysctl
     systemctl enable docker.service
     systemctl restart docker
-    echo -e "docker $(colorEcho $BLUE $(docker info|grep 'Server Version'|awk '{print $3}')) install success!"
+    echo -e "docker $(color_echo $blue $(docker info|grep 'Server Version'|awk '{print $3}')) install success!"
 }
 
 main
