@@ -209,16 +209,11 @@ offline_install(){
 
 standard_install(){
     dependent_install
-    # Centos8
-    if [[ $package_manager == 'dnf' && `cat /etc/redhat-release |grep CentOS` ]];then
-        ## see https://teddysun.com/587.html
+    
+    if [[ $package_manager == 'dnf' ]];then
         dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-        # install lastest containerd
-        local containerd_url="https://download.docker.com/linux/centos/7/x86_64/stable/Packages/"
-        local package_list="`curl -s $containerd_url`"
-        local containerd_index=`echo "$package_list"|grep containerd|awk -F' {2,}' '{print $2}'|awk '{printf("%s %s\n", $1, $2)}'|sort -r|head -n 1`
-        dnf install -y $containerd_url/`echo "$package_list"|grep "$containerd_index"|awk -F '"' '{print $2}'`
-        dnf install -y --nobest docker-ce
+        dnf update
+        dnf install -y docker-ce
     else
         ip_is_connect www.google.com
         [[  $? -eq 0 ]] && can_google=1
