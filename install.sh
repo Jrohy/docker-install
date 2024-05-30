@@ -212,7 +212,7 @@ standard_install(){
     
     if [[ $package_manager == 'dnf' ]];then
         dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-        dnf update
+        dnf update -y
         dnf install -y docker-ce
     else
         ip_is_connect www.google.com
